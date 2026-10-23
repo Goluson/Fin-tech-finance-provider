@@ -81,10 +81,7 @@ async def create_financing_application(
     if float(payload.requested_amount) > max_allowed:
         raise HTTPException(
             status_code=400,
-            detail=(
-                f"Requested amount exceeds the maximum allowed "
-                f"({int(settings.max_financing_pct_of_po * 100)}% of PO value = {max_allowed:.2f})."
-            ),
+            detail=f"Requested amount cannot exceed total PO value ({max_allowed:.2f}).",
         )
 
 

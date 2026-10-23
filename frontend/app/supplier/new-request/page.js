@@ -12,7 +12,7 @@ import {
   createFinancingApplication,
 } from "@/lib/api";
 
-const MAX_FINANCING_PCT = 0.8;
+const MAX_FINANCING_PCT = 1.0;
 
 function NewRequestInner() {
   const { cognitoUser } = useAuth();
@@ -75,6 +75,9 @@ function NewRequestInner() {
       return;
     }
     setError("");
+    if (!requestedAmount || parseFloat(requestedAmount) > parseFloat(totalValue)) {
+      setRequestedAmount(totalValue);
+    }
     setStep(3);
   };
 
@@ -85,7 +88,7 @@ function NewRequestInner() {
       return;
     }
     if (parseFloat(requestedAmount) > parseFloat(maxAllowed)) {
-      setError(`Requested amount cannot exceed ${MAX_FINANCING_PCT * 100}% of PO value (${maxAllowed}).`);
+      setError(`Requested amount cannot exceed total PO value (${currency} ${maxAllowed}).`);
       return;
     }
     setError("");
@@ -193,8 +196,7 @@ function NewRequestInner() {
           <form onSubmit={handleFinalSubmit} className="card mt-6 space-y-4 p-6">
             <h2 className="mb-1 text-lg font-medium text-navy-900">Step 3 &middot; Financing Amount</h2>
             <p className="mb-2 text-sm text-slate-500">
-              You may request up to {MAX_FINANCING_PCT * 100}% of the PO value
-              {maxAllowed && ` (max ${currency} ${maxAllowed})`}.
+              60% of the total order value is provided upon Order Received, and the remaining 40% after the order is placed.
             </p>
             <div>
               <label className="mb-1 block text-sm font-medium text-navy-800">Requested Financing Amount</label>

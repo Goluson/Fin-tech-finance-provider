@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     upload_url_expiration_minutes: int = 10
     max_upload_size_mb: int = 25
     cors_allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
-    max_financing_pct_of_po: float = 0.80
+    max_financing_pct_of_po: float = 1.00
     initial_disbursement_pct: float = 0.60
     remaining_disbursement_pct: float = 0.40
 

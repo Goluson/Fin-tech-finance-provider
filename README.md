@@ -17,11 +17,11 @@ A purchase-order financing platform where suppliers upload purchase orders and r
 
 1. A supplier signs in with Cognito and uploads a PO PDF directly to private S3 using a short-lived presigned URL.
 2. The supplier enters PO details; the API stores them in PostgreSQL.
-3. The supplier requests financing, capped server-side at 80% of PO value.
+3. The supplier requests financing based on the total PO value.
 4. An admin reviews the request and views the PO using a temporary S3 URL.
 5. An admin manually approves, rejects, or disburses capital in 2 milestone tranches:
-   - **Tranche 1 (60% of capital)**: Disbursed upon Order Received and validation.
-   - **Tranche 2 (Remaining 40% of capital)**: Disbursed once the order is placed.
+   - **Tranche 1 (60% of total value)**: Disbursed upon Order Received.
+   - **Tranche 2 (Remaining 40% of total value)**: Disbursed once the order is placed.
 
 Roles remain in PostgreSQL and are never accepted from Cognito claims or the browser. Public sign-up creates supplier accounts only. An administrator must be provisioned internally and assigned the ADMIN role in PostgreSQL.
 
@@ -75,5 +75,5 @@ Deploy the frontend and FastAPI backend as separate App Runner services or ECS s
 - Cognito ID tokens are verified by the API against the pool's published signing keys, issuer, and app client ID.
 - Business roles are loaded from PostgreSQL, so a supplier cannot elevate themselves by changing browser data or token claims.
 - Suppliers can access only their own PO documents; admins can review all applications.
-- Financing requests are capped at 80% of PO value by the API.
+- Capital is disbursed in 2 tranches: 60% of total value upon Order Received, and remaining 40% after order is placed.
 - Admin decisions are manual. Automated risk scoring and underwriting are intentionally out of scope.
