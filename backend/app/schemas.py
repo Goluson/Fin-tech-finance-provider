@@ -100,6 +100,8 @@ class FinancingApplicationOut(BaseModel):
     initial_disbursement_amount: Optional[Decimal] = None
     remaining_disbursement_amount: Optional[Decimal] = None
     disbursed_amount: Optional[Decimal] = None
+    max_advance_allowed: Optional[Decimal] = None
+    remaining_available_amount: Optional[Decimal] = None
     initial_disbursement_pct: float = 60.0
     remaining_disbursement_pct: float = 40.0
 

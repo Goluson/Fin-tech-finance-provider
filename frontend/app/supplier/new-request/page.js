@@ -35,7 +35,10 @@ function NewRequestInner() {
   // Step 3
   const [requestedAmount, setRequestedAmount] = useState("");
 
-  const maxAllowed = totalValue ? (parseFloat(totalValue) * MAX_FINANCING_PCT).toFixed(2) : null;
+  const maxAdvance = totalValue ? (parseFloat(totalValue) * 0.60).toFixed(2) : null;
+  const remainingBuffer = (totalValue && requestedAmount)
+    ? Math.max(0, parseFloat(totalValue) - parseFloat(requestedAmount)).toFixed(2)
+    : totalValue ? (parseFloat(totalValue) * 0.40).toFixed(2) : null;
 
   const handleFileUpload = async () => {
     if (!file) {
@@ -75,8 +78,9 @@ function NewRequestInner() {
       return;
     }
     setError("");
-    if (!requestedAmount || parseFloat(requestedAmount) > parseFloat(totalValue)) {
-      setRequestedAmount(totalValue);
+    const maxAdv = (parseFloat(totalValue) * 0.60).toFixed(2);
+    if (!requestedAmount || parseFloat(requestedAmount) > parseFloat(maxAdv)) {
+      setRequestedAmount(maxAdv);
     }
     setStep(3);
   };
@@ -84,11 +88,11 @@ function NewRequestInner() {
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if (!requestedAmount || parseFloat(requestedAmount) <= 0) {
-      setError("Please enter a valid requested amount.");
+      setError("Please enter a valid requested advance amount.");
       return;
     }
-    if (parseFloat(requestedAmount) > parseFloat(maxAllowed)) {
-      setError(`Requested amount cannot exceed total PO value (${currency} ${maxAllowed}).`);
+    if (parseFloat(requestedAmount) > parseFloat(maxAdvance)) {
+      setError(`Initial advance cannot exceed 60% of the total order value (${currency} ${maxAdvance}). Remaining balance is accessible once order is placed.`);
       return;
     }
     setError("");
@@ -194,65 +198,106 @@ function NewRequestInner() {
 
         {step === 3 && (
           <form onSubmit={handleFinalSubmit} className="card mt-6 space-y-4 p-6">
-            <h2 className="mb-1 text-lg font-medium text-navy-900">Step 3 &middot; Financing Amount</h2>
-            <p className="mb-2 text-sm text-slate-500">
-              60% of the total order value is provided upon Order Received, and the remaining 40% after the order is placed.
+            <h2 className="mb-1 text-lg font-medium text-navy-900">Step 3 &middot; Initial Working Capital Advance</h2>
+            <p className="mb-3 text-sm text-slate-500">
+              Your buyer gave an order of <strong className="text-navy-900">{currency} {parseFloat(totalValue).toLocaleString()}</strong>.
+              You may take up to 60% upfront (<strong className="text-emerald-700">{currency} {maxAdvance}</strong>) to run your business operations continuously.
+              The remaining amount can be taken (if needed) once the order is confirmed placed.
             </p>
+
             <div>
-              <label className="mb-1 block text-sm font-medium text-navy-800">Requested Financing Amount</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium text-navy-800">
+                  How much capital do you desire now? (Up to 60%)
+                </label>
+                <span className="text-xs text-slate-500 font-medium">
+                  Max: {currency} {maxAdvance}
+                </span>
+              </div>
               <input
                 type="number"
                 min="0.01"
                 step="0.01"
-                max={maxAllowed || undefined}
-                className="input-field"
+                max={maxAdvance || undefined}
+                className="input-field text-lg font-semibold text-navy-900"
                 value={requestedAmount}
                 onChange={(e) => setRequestedAmount(e.target.value)}
                 required
               />
             </div>
 
+            {/* Quick-choice percentage chips */}
+            {totalValue && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-xs text-slate-400 font-medium mr-1">Quick select:</span>
+                {[
+                  { label: "60% (Max)", pct: 0.60 },
+                  { label: "50%", pct: 0.50 },
+                  { label: "40%", pct: 0.40 },
+                  { label: "25%", pct: 0.25 },
+                ].map(({ label, pct }) => {
+                  const val = (parseFloat(totalValue) * pct).toFixed(2);
+                  const isSelected = requestedAmount === val;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setRequestedAmount(val)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${
+                        isSelected
+                          ? "bg-navy-900 text-white border-navy-900 shadow-sm"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      {label} &middot; {currency} {parseFloat(val).toLocaleString()}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {requestedAmount && parseFloat(requestedAmount) > 0 && (
               <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 text-sm text-navy-900 animate-in fade-in">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-navy-900 flex items-center gap-1.5">
-                    <span>🏢</span> Company Capital Disbursement Schedule
+                    <span>🏢</span> Capital Flow Breakdown
                   </span>
                   <span className="text-xs bg-sky-200/80 text-sky-900 font-semibold px-2 py-0.5 rounded-full">
-                    2 Tranches
+                    Total Order: {currency} {parseFloat(totalValue).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 mb-3">
-                  Under our company policy, financing capital is disbursed in two tranches upon milestone verification:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-white p-3 border border-emerald-200 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                  <div className="rounded-lg bg-white p-3.5 border border-emerald-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-                        Tranche 1 &middot; Order Received (60%)
+                        Advance Taken Now (Order Received)
                       </span>
-                      <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">60%</span>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                        {totalValue ? ((parseFloat(requestedAmount) / parseFloat(totalValue)) * 100).toFixed(0) : "60"}%
+                      </span>
                     </div>
-                    <div className="text-lg font-bold text-navy-950 mt-1.5">
-                      {currency} {(parseFloat(requestedAmount) * 0.6).toFixed(2)}
+                    <div className="text-xl font-black text-navy-950 mt-1.5">
+                      {currency} {parseFloat(requestedAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1 leading-snug">
-                      Disbursed immediately once your purchase order is reviewed and approved.
+                      Disbursed upfront upon PO approval to fund your operations continuously.
                     </p>
                   </div>
 
-                  <div className="rounded-lg bg-white p-3 border border-blue-200 shadow-sm">
+                  <div className="rounded-lg bg-white p-3.5 border border-blue-200 shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-blue-700 uppercase tracking-wide">
-                        Tranche 2 &middot; Order Placed (40%)
+                        Remaining Available (Order Placed)
                       </span>
-                      <span className="text-xs font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">40%</span>
+                      <span className="text-xs font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
+                        {totalValue ? (100 - (parseFloat(requestedAmount) / parseFloat(totalValue)) * 100).toFixed(0) : "40"}%
+                      </span>
                     </div>
-                    <div className="text-lg font-bold text-navy-950 mt-1.5">
-                      {currency} {(parseFloat(requestedAmount) * 0.4).toFixed(2)}
+                    <div className="text-xl font-black text-navy-950 mt-1.5">
+                      {currency} {remainingBuffer ? parseFloat(remainingBuffer).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1 leading-snug">
-                      Remaining balance disbursed once the order is placed with your supplier/vendor.
+                      Can be taken (if needed) once the order is placed firmly with vendors.
                     </p>
                   </div>
                 </div>

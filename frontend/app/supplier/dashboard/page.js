@@ -64,7 +64,7 @@ function SupplierDashboardInner() {
                   <th className="px-6 py-3 text-left font-medium text-slate-500">PO Number</th>
                   <th className="px-6 py-3 text-left font-medium text-slate-500">Buyer</th>
                   <th className="px-6 py-3 text-left font-medium text-slate-500">PO Value</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-500">Requested</th>
+                  <th className="px-6 py-3 text-left font-medium text-slate-500">Advance Drawn</th>
                   <th className="px-6 py-3 text-left font-medium text-slate-500">Status</th>
                   <th className="px-6 py-3 text-left font-medium text-slate-500">Submitted</th>
                 </tr>
@@ -81,10 +81,10 @@ function SupplierDashboardInner() {
                       <div className="font-medium text-navy-900">{a.requested_amount?.toLocaleString?.() ?? a.requested_amount}</div>
                       <div className="text-[11px] text-slate-400">
                         {a.status === 'FUNDED'
-                          ? '100% Disbursed (Order Placed)'
+                          ? 'Full Order Disbursed'
                           : a.status === 'PARTIALLY_FUNDED'
-                          ? '60% Disbursed (Order Received)'
-                          : 'Awaiting Review/Disbursement'}
+                          ? 'Advance Disbursed (Order Received)'
+                          : 'Awaiting Approval'}
                       </div>
                     </td>
                     <td className="px-6 py-4">

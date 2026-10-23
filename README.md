@@ -17,11 +17,11 @@ A purchase-order financing platform where suppliers upload purchase orders and r
 
 1. A supplier signs in with Cognito and uploads a PO PDF directly to private S3 using a short-lived presigned URL.
 2. The supplier enters PO details; the API stores them in PostgreSQL.
-3. The supplier requests financing based on the total PO value.
+3. The supplier requests working capital advance (any desired amount up to 60% of the total order value) upon receiving the order to continuously fund operations.
 4. An admin reviews the request and views the PO using a temporary S3 URL.
-5. An admin manually approves, rejects, or disburses capital in 2 milestone tranches:
-   - **Tranche 1 (60% of total value)**: Disbursed upon Order Received.
-   - **Tranche 2 (Remaining 40% of total value)**: Disbursed once the order is placed.
+5. Capital is disbursed across two milestones:
+   - **Tranche 1 (Initial Advance up to 60%)**: Disbursed upon Order Received to maintain continuous business cash flow.
+   - **Tranche 2 (Remaining Balance, if needed)**: Disbursed once the order is placed firmly with vendors.
 
 Roles remain in PostgreSQL and are never accepted from Cognito claims or the browser. Public sign-up creates supplier accounts only. An administrator must be provisioned internally and assigned the ADMIN role in PostgreSQL.
 

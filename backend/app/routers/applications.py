@@ -24,18 +24,22 @@ settings = get_settings()
 
 
 def _to_out(app: FinancingApplication) -> FinancingApplicationOut:
-    """Flattens related PO/supplier fields and computes 60% / 40% capital tranches."""
+    """Flattens related PO/supplier fields and calculates up to 60% initial advance and remaining balance upon order placed."""
     req_amt = Decimal(str(app.requested_amount))
-    initial_pct = Decimal(str(settings.initial_disbursement_pct))
-    remaining_pct = Decimal(str(settings.remaining_disbursement_pct))
+    po_val = Decimal(str(app.purchase_order.total_value)) if app.purchase_order else req_amt
 
-    initial_amt = (req_amt * initial_pct).quantize(Decimal("0.01"))
-    remaining_amt = (req_amt * remaining_pct).quantize(Decimal("0.01"))
+    max_advance = (po_val * Decimal("0.60")).quantize(Decimal("0.01"))
+    remaining_available = (po_val - req_amt).quantize(Decimal("0.01"))
+
+    # Initial advance is what the supplier desired/requested now (up to 60% of X)
+    initial_amt = req_amt
+    # Remaining tranche when order placed (if needed)
+    remaining_amt = remaining_available
 
     if app.status == ApplicationStatus.FUNDED:
-        disbursed = req_amt
+        disbursed = po_val  # Full order financed / funded
     elif app.status == ApplicationStatus.PARTIALLY_FUNDED:
-        disbursed = initial_amt
+        disbursed = req_amt  # Initial advance drawn
     else:
         disbursed = Decimal("0.00")
 
@@ -52,8 +56,10 @@ def _to_out(app: FinancingApplication) -> FinancingApplicationOut:
         initial_disbursement_amount=initial_amt,
         remaining_disbursement_amount=remaining_amt,
         disbursed_amount=disbursed,
-        initial_disbursement_pct=float(initial_pct * 100),
-        remaining_disbursement_pct=float(remaining_pct * 100),
+        max_advance_allowed=max_advance,
+        remaining_available_amount=remaining_available,
+        initial_disbursement_pct=60.0,
+        remaining_disbursement_pct=40.0,
         po_number=app.purchase_order.po_number if app.purchase_order else None,
         buyer_name=app.purchase_order.buyer_name if app.purchase_order else None,
         po_total_value=app.purchase_order.total_value if app.purchase_order else None,
@@ -77,11 +83,15 @@ async def create_financing_application(
     if po.supplier_id != user.id:
         raise HTTPException(status_code=403, detail="You can only request financing on your own purchase orders.")
 
-    max_allowed = float(po.total_value) * float(settings.max_financing_pct_of_po)
-    if float(payload.requested_amount) > max_allowed:
+    max_advance_allowed = float(po.total_value) * 0.60
+    if float(payload.requested_amount) > max_advance_allowed:
         raise HTTPException(
             status_code=400,
-            detail=f"Requested amount cannot exceed total PO value ({max_allowed:.2f}).",
+            detail=(
+                f"Initial advance cannot exceed 60% of the total order value "
+                f"({po.currency} {max_advance_allowed:.2f}). "
+                f"Remaining balance is available to draw (if needed) once the order is placed firmly."
+            ),
         )
 
 

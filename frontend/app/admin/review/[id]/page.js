@@ -103,24 +103,20 @@ function AdminReviewInner() {
                 <Row label="PO Number" value={application.po_number} />
                 <Row label="Buyer Name" value={application.buyer_name} />
                 <Row
-                  label="Total PO Value"
+                  label="Total Order Value"
                   value={application.po_total_value?.toLocaleString?.() ?? application.po_total_value}
                 />
                 <Row
-                  label="Requested Amount"
+                  label="Advance Drawn (Order Received)"
                   value={application.requested_amount?.toLocaleString?.() ?? application.requested_amount}
                 />
                 <Row
-                  label="Tranche 1 (60% Order Received)"
-                  value={application.initial_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.6).toFixed(2) : "-")}
+                  label="Remaining Balance (Order Placed, if needed)"
+                  value={application.remaining_disbursement_amount?.toLocaleString?.() ?? (application.po_total_value && application.requested_amount ? (application.po_total_value - application.requested_amount).toFixed(2) : "-")}
                 />
                 <Row
-                  label="Tranche 2 (40% Order Placed)"
-                  value={application.remaining_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.4).toFixed(2) : "-")}
-                />
-                <Row
-                  label="Total Disbursed"
-                  value={application.disbursed_amount?.toLocaleString?.() ?? (application.status === "FUNDED" ? application.requested_amount : application.status === "PARTIALLY_FUNDED" ? (application.requested_amount * 0.6).toFixed(2) : "0.00")}
+                  label="Total Disbursed to Date"
+                  value={application.disbursed_amount?.toLocaleString?.() ?? (application.status === "FUNDED" ? application.po_total_value : application.status === "PARTIALLY_FUNDED" ? application.requested_amount : "0.00")}
                 />
                 <Row label="Supplier" value={application.supplier_company_name} />
                 <Row label="Submitted" value={new Date(application.created_at).toLocaleString()} />
@@ -200,7 +196,7 @@ function AdminReviewInner() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Tranche 1: Order Received (60%) */}
+                  {/* Tranche 1: Order Received (Advance up to 60%) */}
                   <div className={`p-3 rounded-lg border ${
                     application.status === "PARTIALLY_FUNDED" || application.status === "FUNDED"
                       ? "bg-emerald-50/60 border-emerald-200"
@@ -208,14 +204,14 @@ function AdminReviewInner() {
                   }`}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-xs font-bold text-navy-900">
-                        Tranche 1 &middot; Order Received (60%)
+                        Tranche 1 &middot; Order Received (Advance Taken)
                       </div>
                       <span className="text-xs font-bold text-navy-900">
-                        ${application.initial_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.6).toFixed(2) : "-")}
+                        ${application.requested_amount?.toLocaleString?.() ?? application.requested_amount}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mb-2">
-                      Initial working capital advance upon receiving and validating the PO.
+                      Working capital advance requested by supplier to fund ongoing business operations.
                     </p>
                     {application.status === "APPROVED" && (
                       <button
@@ -223,17 +219,17 @@ function AdminReviewInner() {
                         disabled={actionLoading}
                         onClick={() => handleStatusChange("PARTIALLY_FUNDED")}
                       >
-                        {actionLoading ? "Processing..." : "Disburse 60% Capital (Order Received)"}
+                        {actionLoading ? "Processing..." : `Disburse Advance ($${application.requested_amount}) · Order Received`}
                       </button>
                     )}
                     {(application.status === "PARTIALLY_FUNDED" || application.status === "FUNDED") && (
                       <div className="text-xs font-medium text-emerald-700 flex items-center gap-1">
-                        <span>✓</span> 60% Capital Disbursed to Supplier
+                        <span>✓</span> Advance Disbursed to Supplier
                       </div>
                     )}
                   </div>
 
-                  {/* Tranche 2: Order Placed (Remaining 40%) */}
+                  {/* Tranche 2: Order Placed (Remaining balance if needed) */}
                   <div className={`p-3 rounded-lg border ${
                     application.status === "FUNDED"
                       ? "bg-emerald-50/60 border-emerald-200"
@@ -243,14 +239,14 @@ function AdminReviewInner() {
                   }`}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-xs font-bold text-navy-900">
-                        Tranche 2 &middot; Order Placed (Remaining 40%)
+                        Tranche 2 &middot; Order Placed (Remaining Balance)
                       </div>
                       <span className="text-xs font-bold text-navy-900">
-                        ${application.remaining_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.4).toFixed(2) : "-")}
+                        ${application.remaining_disbursement_amount?.toLocaleString?.() ?? (application.po_total_value && application.requested_amount ? (application.po_total_value - application.requested_amount).toFixed(2) : "-")}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mb-2">
-                      Final capital balance released once the order is placed with vendors/manufacturers.
+                      Remaining order balance released once order is confirmed placed with vendors.
                     </p>
                     {application.status === "PARTIALLY_FUNDED" && (
                       <button
@@ -258,7 +254,7 @@ function AdminReviewInner() {
                         disabled={actionLoading}
                         onClick={() => handleStatusChange("FUNDED")}
                       >
-                        {actionLoading ? "Processing..." : "Disburse Remaining 40% (Order Placed)"}
+                        {actionLoading ? "Processing..." : `Disburse Remaining Balance ($${application.remaining_disbursement_amount}) · Order Placed`}
                       </button>
                     )}
                     {application.status === "APPROVED" && (
@@ -266,9 +262,9 @@ function AdminReviewInner() {
                         className="btn-secondary w-full text-xs py-1.5 text-slate-600 border border-slate-300"
                         disabled={actionLoading}
                         onClick={() => handleStatusChange("FUNDED")}
-                        title="Directly disburse 100% in a single step if needed"
+                        title="Directly disburse 100% full order value if needed"
                       >
-                        Directly Disburse Full 100% Capital
+                        Directly Disburse Full Order Value
                       </button>
                     )}
                     {application.status === "FUNDED" && (

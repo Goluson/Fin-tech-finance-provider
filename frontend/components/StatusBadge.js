@@ -13,8 +13,8 @@ const STYLES = {
 };
 
 const LABELS = {
-  PARTIALLY_FUNDED: "60% Funded (Order Received)",
-  FUNDED: "100% Funded (Order Placed)",
+  PARTIALLY_FUNDED: "Advance Disbursed (Order Received)",
+  FUNDED: "Fully Funded (Order Placed)",
 };
 
 export default function StatusBadge({ status }) {
