@@ -19,7 +19,9 @@ A purchase-order financing platform where suppliers upload purchase orders and r
 2. The supplier enters PO details; the API stores them in PostgreSQL.
 3. The supplier requests financing, capped server-side at 80% of PO value.
 4. An admin reviews the request and views the PO using a temporary S3 URL.
-5. An admin manually approves, rejects, or funds the request with optional notes.
+5. An admin manually approves, rejects, or disburses capital in 2 milestone tranches:
+   - **Tranche 1 (60% of capital)**: Disbursed upon Order Received and validation.
+   - **Tranche 2 (Remaining 40% of capital)**: Disbursed once the order is placed.
 
 Roles remain in PostgreSQL and are never accepted from Cognito claims or the browser. Public sign-up creates supplier accounts only. An administrator must be provisioned internally and assigned the ADMIN role in PostgreSQL.
 

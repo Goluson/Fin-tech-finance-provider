@@ -209,6 +209,53 @@ function NewRequestInner() {
                 required
               />
             </div>
+
+            {requestedAmount && parseFloat(requestedAmount) > 0 && (
+              <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 text-sm text-navy-900 animate-in fade-in">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-navy-900 flex items-center gap-1.5">
+                    <span>🏢</span> Company Capital Disbursement Schedule
+                  </span>
+                  <span className="text-xs bg-sky-200/80 text-sky-900 font-semibold px-2 py-0.5 rounded-full">
+                    2 Tranches
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mb-3">
+                  Under our company policy, financing capital is disbursed in two tranches upon milestone verification:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-white p-3 border border-emerald-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                        Tranche 1 &middot; Order Received (60%)
+                      </span>
+                      <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">60%</span>
+                    </div>
+                    <div className="text-lg font-bold text-navy-950 mt-1.5">
+                      {currency} {(parseFloat(requestedAmount) * 0.6).toFixed(2)}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                      Disbursed immediately once your purchase order is reviewed and approved.
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-white p-3 border border-blue-200 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+                        Tranche 2 &middot; Order Placed (40%)
+                      </span>
+                      <span className="text-xs font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">40%</span>
+                    </div>
+                    <div className="text-lg font-bold text-navy-950 mt-1.5">
+                      {currency} {(parseFloat(requestedAmount) * 0.4).toFixed(2)}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                      Remaining balance disbursed once the order is placed with your supplier/vendor.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between pt-2">
               <button type="button" className="btn-secondary" onClick={() => setStep(2)}>
                 Back

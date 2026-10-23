@@ -8,7 +8,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/lib/AuthContext";
 import { listApplications } from "@/lib/api";
 
-const FILTERS = ["ALL", "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "FUNDED"];
+const FILTERS = ["ALL", "PENDING", "UNDER_REVIEW", "APPROVED", "PARTIALLY_FUNDED", "FUNDED", "REJECTED"];
 
 function AdminDashboardInner() {
   const { cognitoUser } = useAuth();
@@ -96,7 +96,14 @@ function AdminDashboardInner() {
                       {a.po_total_value?.toLocaleString?.() ?? a.po_total_value}
                     </td>
                     <td className="px-6 py-4 text-slate-600">
-                      {a.requested_amount?.toLocaleString?.() ?? a.requested_amount}
+                      <div className="font-medium text-navy-900">{a.requested_amount?.toLocaleString?.() ?? a.requested_amount}</div>
+                      <div className="text-[11px] text-slate-400">
+                        {a.status === 'FUNDED'
+                          ? '100% Disbursed'
+                          : a.status === 'PARTIALLY_FUNDED'
+                          ? '60% Disbursed (Order Received)'
+                          : 'Awaiting Disbursement'}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <StatusBadge status={a.status} />

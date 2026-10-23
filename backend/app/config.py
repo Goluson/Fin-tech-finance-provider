@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 25
     cors_allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     max_financing_pct_of_po: float = 0.80
+    initial_disbursement_pct: float = 0.60
+    remaining_disbursement_pct: float = 0.40
 
     @property
     def cors_origins_list(self) -> list[str]:

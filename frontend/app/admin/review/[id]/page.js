@@ -110,6 +110,18 @@ function AdminReviewInner() {
                   label="Requested Amount"
                   value={application.requested_amount?.toLocaleString?.() ?? application.requested_amount}
                 />
+                <Row
+                  label="Tranche 1 (60% Order Received)"
+                  value={application.initial_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.6).toFixed(2) : "-")}
+                />
+                <Row
+                  label="Tranche 2 (40% Order Placed)"
+                  value={application.remaining_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.4).toFixed(2) : "-")}
+                />
+                <Row
+                  label="Total Disbursed"
+                  value={application.disbursed_amount?.toLocaleString?.() ?? (application.status === "FUNDED" ? application.requested_amount : application.status === "PARTIALLY_FUNDED" ? (application.requested_amount * 0.6).toFixed(2) : "0.00")}
+                />
                 <Row label="Supplier" value={application.supplier_company_name} />
                 <Row label="Submitted" value={new Date(application.created_at).toLocaleString()} />
               </dl>
@@ -142,7 +154,7 @@ function AdminReviewInner() {
 
             <label className="mb-1 block text-sm font-medium text-navy-800">Underwriting notes</label>
             <textarea
-              className="input-field mb-4 min-h-[140px]"
+              className="input-field mb-4 min-h-[120px]"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Record the rationale for your decision..."
@@ -168,22 +180,106 @@ function AdminReviewInner() {
                 disabled={actionLoading}
                 onClick={() => handleStatusChange("UNDER_REVIEW")}
               >
-                Mark Under Review
+                Under Review
               </button>
             </div>
 
-            <button
-              className="btn-primary mt-3 w-full"
-              disabled={actionLoading || application.status !== "APPROVED"}
-              onClick={() => handleStatusChange("FUNDED")}
-            >
-              Mark as Funded
-            </button>
-            {application.status !== "APPROVED" && (
-              <p className="mt-2 text-xs text-slate-400">
-                Applications must be approved before they can be marked as funded.
-              </p>
-            )}
+            {/* 2-Stage Capital Disbursement Controls */}
+            <div className="mt-5 pt-4 border-t border-slate-200">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                Capital Disbursement Tranches
+              </h3>
+
+              {application.status === "PENDING" || application.status === "UNDER_REVIEW" ? (
+                <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 border border-amber-200">
+                  Application must be <strong>Approved</strong> first before capital tranches can be disbursed.
+                </div>
+              ) : application.status === "REJECTED" ? (
+                <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 border border-red-200">
+                  This application was rejected. No capital is disbursed.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Tranche 1: Order Received (60%) */}
+                  <div className={`p-3 rounded-lg border ${
+                    application.status === "PARTIALLY_FUNDED" || application.status === "FUNDED"
+                      ? "bg-emerald-50/60 border-emerald-200"
+                      : "bg-slate-50 border-slate-200"
+                  }`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs font-bold text-navy-900">
+                        Tranche 1 &middot; Order Received (60%)
+                      </div>
+                      <span className="text-xs font-bold text-navy-900">
+                        ${application.initial_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.6).toFixed(2) : "-")}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mb-2">
+                      Initial working capital advance upon receiving and validating the PO.
+                    </p>
+                    {application.status === "APPROVED" && (
+                      <button
+                        className="btn-primary w-full text-xs py-2 bg-sky-700 hover:bg-sky-800"
+                        disabled={actionLoading}
+                        onClick={() => handleStatusChange("PARTIALLY_FUNDED")}
+                      >
+                        {actionLoading ? "Processing..." : "Disburse 60% Capital (Order Received)"}
+                      </button>
+                    )}
+                    {(application.status === "PARTIALLY_FUNDED" || application.status === "FUNDED") && (
+                      <div className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+                        <span>✓</span> 60% Capital Disbursed to Supplier
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tranche 2: Order Placed (Remaining 40%) */}
+                  <div className={`p-3 rounded-lg border ${
+                    application.status === "FUNDED"
+                      ? "bg-emerald-50/60 border-emerald-200"
+                      : application.status === "PARTIALLY_FUNDED"
+                      ? "bg-amber-50/60 border-amber-200"
+                      : "bg-slate-50 border-slate-200"
+                  }`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs font-bold text-navy-900">
+                        Tranche 2 &middot; Order Placed (Remaining 40%)
+                      </div>
+                      <span className="text-xs font-bold text-navy-900">
+                        ${application.remaining_disbursement_amount?.toLocaleString?.() ?? (application.requested_amount ? (application.requested_amount * 0.4).toFixed(2) : "-")}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mb-2">
+                      Final capital balance released once the order is placed with vendors/manufacturers.
+                    </p>
+                    {application.status === "PARTIALLY_FUNDED" && (
+                      <button
+                        className="btn-primary w-full text-xs py-2 bg-brandgreen-600 hover:bg-brandgreen-700"
+                        disabled={actionLoading}
+                        onClick={() => handleStatusChange("FUNDED")}
+                      >
+                        {actionLoading ? "Processing..." : "Disburse Remaining 40% (Order Placed)"}
+                      </button>
+                    )}
+                    {application.status === "APPROVED" && (
+                      <button
+                        className="btn-secondary w-full text-xs py-1.5 text-slate-600 border border-slate-300"
+                        disabled={actionLoading}
+                        onClick={() => handleStatusChange("FUNDED")}
+                        title="Directly disburse 100% in a single step if needed"
+                      >
+                        Directly Disburse Full 100% Capital
+                      </button>
+                    )}
+                    {application.status === "FUNDED" && (
+                      <div className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+                        <span>✓</span> 100% Fully Disbursed & PO Closed
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>

@@ -96,6 +96,13 @@ class FinancingApplicationOut(BaseModel):
     reviewed_at: Optional[datetime] = None
     created_at: datetime
 
+    # 2-stage capital disbursement breakdown
+    initial_disbursement_amount: Optional[Decimal] = None
+    remaining_disbursement_amount: Optional[Decimal] = None
+    disbursed_amount: Optional[Decimal] = None
+    initial_disbursement_pct: float = 60.0
+    remaining_disbursement_pct: float = 40.0
+
     # Convenience nested fields for the admin review screen
     po_number: Optional[str] = None
     buyer_name: Optional[str] = None

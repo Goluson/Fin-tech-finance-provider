@@ -6,6 +6,7 @@ is no automated scoring or approval logic here by design.
 """
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -23,7 +24,21 @@ settings = get_settings()
 
 
 def _to_out(app: FinancingApplication) -> FinancingApplicationOut:
-    """Flattens related PO/supplier fields for the admin review screen."""
+    """Flattens related PO/supplier fields and computes 60% / 40% capital tranches."""
+    req_amt = Decimal(str(app.requested_amount))
+    initial_pct = Decimal(str(settings.initial_disbursement_pct))
+    remaining_pct = Decimal(str(settings.remaining_disbursement_pct))
+
+    initial_amt = (req_amt * initial_pct).quantize(Decimal("0.01"))
+    remaining_amt = (req_amt * remaining_pct).quantize(Decimal("0.01"))
+
+    if app.status == ApplicationStatus.FUNDED:
+        disbursed = req_amt
+    elif app.status == ApplicationStatus.PARTIALLY_FUNDED:
+        disbursed = initial_amt
+    else:
+        disbursed = Decimal("0.00")
+
     return FinancingApplicationOut(
         id=app.id,
         po_id=app.po_id,
@@ -34,6 +49,11 @@ def _to_out(app: FinancingApplication) -> FinancingApplicationOut:
         reviewed_by=app.reviewed_by,
         reviewed_at=app.reviewed_at,
         created_at=app.created_at,
+        initial_disbursement_amount=initial_amt,
+        remaining_disbursement_amount=remaining_amt,
+        disbursed_amount=disbursed,
+        initial_disbursement_pct=float(initial_pct * 100),
+        remaining_disbursement_pct=float(remaining_pct * 100),
         po_number=app.purchase_order.po_number if app.purchase_order else None,
         buyer_name=app.purchase_order.buyer_name if app.purchase_order else None,
         po_total_value=app.purchase_order.total_value if app.purchase_order else None,
@@ -149,6 +169,8 @@ async def update_application_status(
 
     if payload.status == ApplicationStatus.FUNDED:
         app.purchase_order.status = "CLOSED"
+    elif payload.status == ApplicationStatus.PARTIALLY_FUNDED:
+        app.purchase_order.status = "FINANCING_REQUESTED"
 
     await db.commit()
     await db.refresh(app)

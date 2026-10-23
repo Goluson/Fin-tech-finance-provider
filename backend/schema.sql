@@ -20,7 +20,7 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE application_status AS ENUM ('PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'FUNDED');
+    CREATE TYPE application_status AS ENUM ('PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'PARTIALLY_FUNDED', 'FUNDED');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
