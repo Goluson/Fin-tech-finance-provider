@@ -69,6 +69,27 @@ Do not use `backend/schema.sql` to initialize an existing production database; t
 
 Deploy the frontend and FastAPI backend as separate App Runner services or ECS services. Put PostgreSQL on Amazon RDS, keep the S3 bucket private, attach an IAM role to the backend service, and restrict API CORS to the deployed frontend origin. Provide the Cognito pool/client IDs and `AWS_REGION` to both services as appropriate; provide `S3_BUCKET_NAME` and database credentials only to the backend. Apply the fresh schema or migration before the first release. The included Dockerfiles build the services; the AWS account, domain, database, Cognito pool, and bucket must be created and configured in your AWS environment.
 
+### Automated CI/CD (GitHub Actions)
+
+A complete continuous integration and deployment workflow is configured in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). On push to `main`:
+1. **CI Validation**: Compiles the FastAPI backend with Python 3.12 and builds Next.js with Node.js 20.
+2. **AWS Deployment**: Authenticates with AWS, builds Docker images, pushes to Amazon ECR, and triggers App Runner deployments.
+3. **Render Deployment (Optional)**: Automatically triggers Render deploy webhooks if set.
+
+#### Required GitHub Secrets (`Settings -> Secrets and variables -> Actions`):
+
+| Secret Name | Description |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | IAM User / Deployment Role Access Key with ECR & App Runner permissions |
+| `AWS_SECRET_ACCESS_KEY` | IAM Secret Access Key |
+| `AWS_REGION` | AWS Region (e.g. `ap-south-1`) |
+| `ECR_BACKEND_REPO` | Amazon ECR repository name for backend (e.g. `fintech-backend`) |
+| `ECR_FRONTEND_REPO` | Amazon ECR repository name for frontend (e.g. `fintech-frontend`) |
+| `AWS_APP_RUNNER_BACKEND_ARN` | *(Optional)* ARN of the backend App Runner service |
+| `AWS_APP_RUNNER_FRONTEND_ARN` | *(Optional)* ARN of the frontend App Runner service |
+| `RENDER_BACKEND_DEPLOY_HOOK` | *(Optional)* Render backend webhook URL |
+| `RENDER_FRONTEND_DEPLOY_HOOK` | *(Optional)* Render frontend webhook URL |
+
 ## Security and product boundaries
 
 - PDF contents travel directly between the browser and private S3; the API only issues time-limited upload/view URLs.
