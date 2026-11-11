@@ -1,7 +1,7 @@
 databases:
   - name: fintech-db
     databaseName: fintech
-    user: postgres
+    user: fintech_user          # "postgres" is reserved, so use another name
     plan: free
 
 services:
@@ -21,19 +21,22 @@ services:
         fromDatabase:
           name: fintech-db
           property: connectionString
+      # Public URL of the frontend (fromService cannot return a public URL)
       - key: CORS_ALLOWED_ORIGINS
-        fromService:
-          type: web
-          name: fintech-frontend
-          property: url
+        value: https://fintech-frontend.onrender.com
       - key: AWS_REGION
         value: ap-south-1
+      # sync: false = Render asks you for the value in the dashboard
       - key: COGNITO_USER_POOL_ID
-        value: ""
+        sync: false
       - key: COGNITO_APP_CLIENT_ID
-        value: ""
+        sync: false
       - key: S3_BUCKET_NAME
-        value: ""
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
 
   # -------------------------------------------------------------------------
   # Next.js Frontend Service
@@ -46,12 +49,12 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
+      # Public URL of the backend (fromService cannot return a public URL)
       - key: NEXT_PUBLIC_API_BASE_URL
-        fromService:
-          type: web
-          name: fintech-backend
-          property: url
+        value: https://fintech-backend.onrender.com
       - key: NEXT_PUBLIC_AWS_REGION
         value: ap-south-1
+      - key: NEXT_PUBLIC_COGNITO_USER_POOL_ID
+        sync: false
       - key: NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID
-        value: ""
+        sync: false
