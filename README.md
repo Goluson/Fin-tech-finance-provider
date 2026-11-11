@@ -1,4 +1,7 @@
-# Fin-tech Finance Provider ? PO Financing Platform (MVP)
+# Fin-tech Finance Provider — PO Financing Platform (MVP)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Goluson/Fin-tech-finance-provider)
+[![CI/CD Pipeline](https://github.com/Goluson/Fin-tech-finance-provider/actions/workflows/deploy.yml/badge.svg)](https://github.com/Goluson/Fin-tech-finance-provider/actions/workflows/deploy.yml)
 
 A purchase-order financing platform where suppliers upload purchase orders and request financing, while administrators manually review and approve or reject applications. Underwriting remains human-led; the platform does not score risk or make lending decisions.
 
