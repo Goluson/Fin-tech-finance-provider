@@ -50,8 +50,6 @@ services:
     startCommand: npm start
     envVars:
       # Public URL of the backend (fromService cannot return a public URL)
-      - key: PYTHON_VERSION
-        value: 3.12.8
       - key: NEXT_PUBLIC_API_BASE_URL
         value: https://fintech-backend.onrender.com
       - key: NEXT_PUBLIC_AWS_REGION
