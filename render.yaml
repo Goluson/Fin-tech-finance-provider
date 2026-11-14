@@ -1,7 +1,7 @@
 databases:
   - name: fintech-db
     databaseName: fintech
-    user: fintech_user          # "postgres" is reserved, so use another name
+    user: fintech_user
     plan: free
 
 services:
@@ -17,16 +17,18 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
       - key: DATABASE_URL
         fromDatabase:
           name: fintech-db
           property: connectionString
-      # Public URL of the frontend (fromService cannot return a public URL)
+      # Public URL of the frontend for CORS
       - key: CORS_ALLOWED_ORIGINS
-        value: https://fintech-frontend.onrender.com
+        value: https://fintech-frontend.onrender.com,http://localhost:3000
       - key: AWS_REGION
         value: ap-south-1
-      # sync: false = Render asks you for the value in the dashboard
+      # sync: false = Render prompts for these in the dashboard if available
       - key: COGNITO_USER_POOL_ID
         sync: false
       - key: COGNITO_APP_CLIENT_ID
@@ -47,14 +49,15 @@ services:
     rootDir: frontend
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    # Bind to Render dynamic port ($PORT) instead of default 3000
+    startCommand: npx next start -p $PORT
     envVars:
-      # Public URL of the backend (fromService cannot return a public URL)
+      - key: NODE_VERSION
+        value: 20.18.0
+      # Public URL of the backend
       - key: NEXT_PUBLIC_API_BASE_URL
         value: https://fintech-backend.onrender.com
       - key: NEXT_PUBLIC_AWS_REGION
         value: ap-south-1
-      - key: NEXT_PUBLIC_COGNITO_USER_POOL_ID
-        sync: false
       - key: NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID
         sync: false
