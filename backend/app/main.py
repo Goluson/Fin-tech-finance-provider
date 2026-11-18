@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.config import get_settings
 import app.database as db_mod
 from app.routers import applications, documents, purchase_orders, users
+from app.routers import local_auth
 
 
 @asynccontextmanager
@@ -68,6 +69,7 @@ async def health_check():
     return {"status": "ok"}
 
 
+app.include_router(local_auth.router)
 app.include_router(users.router)
 app.include_router(documents.router)
 app.include_router(purchase_orders.router)

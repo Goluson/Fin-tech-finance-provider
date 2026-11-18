@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { confirmPasswordReset, confirmSignUp, isCognitoConfigured, requestPasswordReset, signIn, signUp } from "@/lib/cognito";
+import { confirmPasswordReset, confirmSignUp, isCognitoConfigured, requestPasswordReset, resendOtp, signIn, signUp } from "@/lib/cognito";
 import { registerUser } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -41,14 +41,14 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (mode === "signup") {
-        const result = await signUp(email, password);
+        const result = await signUp(email, password, companyName);
         if (result.UserConfirmed) {
           const session = await signIn(email, password);
           await registerUser(session.idToken, { company_name: companyName, role: "SUPPLIER" });
           await refreshProfile();
         } else {
           setConfirmationRequired(true);
-          setNotice("Check your email for the AWS Cognito confirmation code.");
+          setNotice("A 6-digit verification code was sent to your email. Check the backend console window for the OTP.");
         }
       } else {
         const session = await signIn(email, password);
@@ -100,6 +100,14 @@ export default function LoginPage() {
       await refreshProfile();
     } catch (err) { setError(mapCognitoError(err)); }
     finally { setSubmitting(false); }
+  };
+
+  const handleResendOtp = async () => {
+    setError(""); setNotice("");
+    try {
+      await resendOtp(email);
+      setNotice("A new verification code has been sent. Check the backend console window.");
+    } catch (err) { setError(mapCognitoError(err)); }
   };
 
   return (
